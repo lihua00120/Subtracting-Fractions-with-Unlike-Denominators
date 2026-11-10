@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分數重疊實驗室</title>
+<style>
+  :root {
+    --bg: #f3f4f6; --card: #ffffff; --ink: #1f2937; --muted: #6b7280; --line: #e5e7eb;
+    --a: #3b82f6; --a-dark: #1d4ed8; --b: #f97316; --b-dark: #c2410c; --ok: #16a34a; --ok-dark: #166534;
+    --accent: #4f46e5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif;
+  }
+  header { background: var(--card); border-bottom: 4px solid #e0e7ff; text-align: center; padding: 18px 16px; }
+  header h1 { margin: 0; font-size: 2rem; color: var(--accent); letter-spacing: .05em; }
+  header p { margin: 6px 0 0; color: var(--muted); font-weight: 700; }
+  main { max-width: 1180px; margin: 24px auto 48px; padding: 0 16px; display: grid; gap: 20px; grid-template-columns: 340px 1fr; }
+  @media (max-width: 880px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 18px; }
+  .card h2 { margin: 0 0 12px; font-size: 1.15rem; color: var(--accent); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0; }
+  .row .lbl { font-weight: 800; }
+  .stepper { display: flex; align-items: center; gap: 6px; }
+  .stepper button {
+    width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--line); background: #fff;
+    font-size: 1.2rem; font-weight: 900; cursor: pointer; color: var(--ink);
+  }
+  .stepper button:hover:not(:disabled) { background: #eef2ff; border-color: #c7d2fe; }
+  .stepper button:disabled { opacity: .35; cursor: not-allowed; }
+  .stepper output { min-width: 2ch; text-align: center; font-size: 1.4rem; font-weight: 900; }
+  .fracbox { border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; }
+  .fracbox.a { background: #eff6ff; border: 2px solid #bfdbfe; }
+  .fracbox.b { background: #fff7ed; border: 2px solid #fed7aa; }
+  .fracbox .title { font-weight: 900; margin-bottom: 4px; }
+  .fracbox.a .title { color: var(--a-dark); } .fracbox.b .title { color: var(--b-dark); }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seg button, .chip {
+    padding: 10px; border-radius: 12px; border: 2px solid transparent; background: #eef2ff; color: #4338ca;
+    font-weight: 800; font-size: 1rem; cursor: pointer;
+  }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 8px 12px; background: #f3f4f6; color: var(--ink); border-color: var(--line); }
+  .chip:hover { background: #e0e7ff; }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 .15em; }
+  .frac > span:first-child { border-bottom: .09em solid currentColor; padding: 0 .25em; }
+  .frac > span:last-child { padding: 0 .25em; }
+  .eq { font-size: 2.1rem; font-weight: 900; text-align: center; padding: 10px 6px; line-height: 1.6; }
+  .eq .a { color: var(--a-dark); } .eq .b { color: var(--b-dark); } .eq .r { color: var(--ok-dark); }
+  .eq .op { margin: 0 .3em; color: var(--ink); }
+  .stage { display: flex; justify-content: center; }
+  .stage svg { width: 100%; max-width: 760px; height: auto; }
+  .caption {
+    margin-top: 10px; padding: 14px 16px; border-radius: 14px; background: #eef2ff; border: 2px solid #c7d2fe;
+    font-size: 1.15rem; font-weight: 700; line-height: 1.7; min-height: 4.2em;
+  }
+  .caption.warn { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .caption.done { background: #f0fdf4; border-color: #bbf7d0; color: var(--ok-dark); }
+  .nav { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+  .nav button {
+    padding: 14px 22px; border-radius: 14px; border: none; font-size: 1.15rem; font-weight: 900; cursor: pointer;
+  }
+  .nav .next { background: var(--accent); color: #fff; flex: 1; min-width: 160px; }
+  .nav .next:hover:not(:disabled) { background: #4338ca; }
+  .nav .prev, .nav .reset { background: #e5e7eb; color: var(--ink); }
+  .nav button:disabled { opacity: .4; cursor: not-allowed; }
+  .dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+  .dots i { width: 12px; height: 12px; border-radius: 50%; background: #d1d5db; display: block; }
+  .dots i.on { background: var(--accent); transform: scale(1.25); }
+  .legend { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; font-weight: 800; margin-bottom: 4px; }
+  .legend span::before { content: ''; display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -2px; background: var(--c); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔬 分數重疊實驗室</h1>
+  <p>把兩個分數疊在一起，看看怎麼相減！</p>
+</header>
+
+<main>
+  <section class="card" aria-label="設定">
+    <h2>① 設定兩個分數</h2>
+    <div class="fracbox a">
+      <div class="title">被減數（藍色）</div>
+      <div class="row"><span class="lbl">分子</span><div class="stepper"><button data-act="n1-">−</button><output id="n1"></output><button data-act="n1+">+</button></div></div>
+      <div class="row"><span class="lbl">分母</span><div class="stepper"><button data-act="d1-">−</button><output id="d1"></output><button data-act="d1+">+</button></div></div>
+    </div>
+    <div class="fracbox b">
+      <div class="title">減數（橘色）</div>
+      <div class="row"><span class="lbl">分子</span><div class="stepper"><button data-act="n2-">−</button><output id="n2"></output><button data-act="n2+">+</button></div></div>
+      <div class="row"><span class="lbl">分母</span><div class="stepper"><button data-act="d2-">−</button><output id="d2"></output><button data-act="d2+">+</button></div></div>
+    </div>
+    <h2 style="margin-top:16px">圖形</h2>
+    <div class="seg" id="modeSeg">
+      <button data-mode="bar" class="on">▭ 長條圖</button>
+      <button data-mode="circle">◔ 圓形</button>
+    </div>
+    <h2 style="margin-top:16px">範例題</h2>
+    <div class="chips" id="presets"></div>
+  </section>
+
+  <section class="card" aria-label="實驗區">
+    <div class="dots" id="dots"></div>
+    <div class="eq" id="eq"></div>
+    <div class="legend" id="legend"></div>
+    <div class="stage"><svg id="svg" viewBox="0 0 760 380" role="img" aria-label="分數圖形"></svg></div>
+    <div class="caption" id="caption"></div>
+    <div class="nav">
+      <button class="prev" id="prev">← 上一步</button>
+      <button class="next" id="next">下一步 →</button>
+      <button class="reset" id="reset">重來</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- 狀態 ----------
+  var S = { n1: 5, d1: 6, n2: 2, d2: 3, mode: 'bar', step: 0 };
+  var STEP_COUNT = 4;
+  var PRESETS = [[5, 6, 2, 3], [3, 4, 1, 6], [7, 8, 1, 2], [4, 5, 1, 4], [5, 6, 3, 8]];
+
+  // ---------- 數學 ----------
+  function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+  function lcm(a, b) { return a * b / gcd(a, b); }
+  function calc() {
+    var L = lcm(S.d1, S.d2);
+    var k1 = L / S.d1, k2 = L / S.d2;
+    var m1 = S.n1 * k1, m2 = S.n2 * k2;
+    var valid = S.n1 * S.d2 >= S.n2 * S.d1;
+    var rem = m1 - m2;
+    var g = rem > 0 ? gcd(rem, L) : 1;
+    return { L: L, k1: k1, k2: k2, m1: m1, m2: m2, valid: valid, rem: rem, g: g,
+             rn: rem > 0 ? rem / g : 0, rd: rem > 0 ? L / g : 1 };
+  }
+  function F(n, d, cls) {
+    return '<span class="frac ' + (cls || '') + '"><span>' + n + '</span><span>' + d + '</span></span>';
+  }
+
+  // ---------- SVG 小工具 ----------
+  var NS = 'http://www.w3.org/2000/svg';
+  var COLORS = { a: '#3b82f6', aDark: '#1d4ed8', b: '#f97316', bDark: '#c2410c', ok: '#22c55e', okDark: '#166534', ink: '#374151' };
+
+  function pt(cx, cy, r, frac) {
+    var ang = (frac * 360 - 90) * Math.PI / 180;
+    return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)];
+  }
+  function sector(cx, cy, r, a, b) {
+    if (b - a >= 0.9999) return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"';
+    var p0 = pt(cx, cy, r, a), p1 = pt(cx, cy, r, b);
+    var large = (b - a) > 0.5 ? 1 : 0;
+    return '<path d="M' + cx + ' ' + cy + ' L' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) +
+           ' A' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) + ' Z"';
+  }
+
+  // box: bar → {x,y,w,h}   circle → {cx,cy,r}
+  function fill(box, a, b, color, opacity, extra) {
+    if (b <= a) return '';
+    var attrs = ' fill="' + color + '" fill-opacity="' + opacity + '" ' + (extra || '') + '/>';
+    if (S.mode === 'bar') {
+      return '<rect x="' + (box.x + a * box.w).toFixed(2) + '" y="' + box.y + '" width="' + ((b - a) * box.w).toFixed(2) + '" height="' + box.h + '"' + attrs;
+    }
+    var s = sector(box.cx, box.cy, box.r, a, b);
+    return s + attrs;
+  }
+  function ticks(box, d, color, width, dash, over) {
+    var out = '';
+    over = over || 0;
+    for (var i = 1; i < d; i++) {
+      var f = i / d;
+      if (S.mode === 'bar') {
+        var x = (box.x + f * box.w).toFixed(2);
+        out += '<line x1="' + x + '" y1="' + (box.y - over) + '" x2="' + x + '" y2="' + (box.y + box.h + over) + '"';
+      } else {
+        var p = pt(box.cx, box.cy, box.r + over, f);
+        out += '<line x1="' + box.cx + '" y1="' + box.cy + '" x2="' + p[0].toFixed(2) + '" y2="' + p[1].toFixed(2) + '"';
+      }
+      out += ' stroke="' + color + '" stroke-width="' + width + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' stroke-linecap="round"/>';
+    }
+    return out;
+  }
+  function outline(box) {
+    if (S.mode === 'bar') {
+      return '<rect x="' + box.x + '" y="' + box.y + '" width="' + box.w + '" height="' + box.h + '" rx="6" fill="none" stroke="#374151" stroke-width="3"/>';
+    }
+    return '<circle cx="' + box.cx + '" cy="' + box.cy + '" r="' + box.r + '" fill="none" stroke="#374151" stroke-width="3"/>';
+  }
+  function base(box) {
+    if (S.mode === 'bar') {
+      return '<rect x="' + box.x + '" y="' + box.y + '" width="' + box.w + '" height="' + box.h + '" rx="6" fill="#fff"/>';
+    }
+    return '<circle cx="' + box.cx + '" cy="' + box.cy + '" r="' + box.r + '" fill="#fff"/>';
+  }
+  function text(x, y, s, color, size, anchor) {
+    return '<text x="' + x + '" y="' + y + '" fill="' + color + '" font-size="' + (size || 22) + '" font-weight="800" text-anchor="' + (anchor || 'middle') + '">' + s + '</text>';
+  }
+  var DEFS = '<defs><pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+             '<rect width="10" height="10" fill="#fdba74"/><line x1="0" y1="0" x2="0" y2="10" stroke="#c2410c" stroke-width="4"/></pattern>' +
+             '<pattern id="stripe" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+             '<line x1="0" y1="0" x2="0" y2="12" stroke="#f97316" stroke-width="5"/></pattern></defs>';
+
+  // ---------- 畫面 ----------
+  function drawStage(c) {
+    var svg = document.getElementById('svg');
+    var h = DEFS;
+    var bar = S.mode === 'bar';
+    var L = c.L;
+    var f1 = S.n1 / S.d1, f2 = S.n2 / S.d2;
+
+    // 單一大圖的位置
+    var big = bar ? { x: 60, y: 120, w: 640, h: 110 } : { cx: 380, cy: 190, r: 120 };
+
+    if (S.step === 0 || !c.valid) {
+      // 兩個分開的圖
+      var b1, b2;
+      if (bar) {
+        b1 = { x: 60, y: 60, w: 640, h: 80 }; b2 = { x: 60, y: 200, w: 640, h: 80 };
+      } else {
+        b1 = { cx: 210, cy: 170, r: 120 }; b2 = { cx: 550, cy: 170, r: 120 };
+      }
+      [[b1, S.n1, S.d1, COLORS.a, COLORS.aDark], [b2, S.n2, S.d2, COLORS.b, COLORS.bDark]].forEach(function (o) {
+        h += base(o[0]) + fill(o[0], 0, o[1] / o[2], o[3], 0.8) + ticks(o[0], o[2], '#374151', 2) + outline(o[0]);
+      });
+      if (bar) {
+        h += text(380, 40, S.n1 + '/' + S.d1 + '：切成 ' + S.d1 + ' 等份，塗 ' + S.n1 + ' 份', COLORS.aDark, 22);
+        h += text(380, 188, S.n2 + '/' + S.d2 + '：切成 ' + S.d2 + ' 等份，塗 ' + S.n2 + ' 份', COLORS.bDark, 22);
+      } else {
+        h += text(210, 330, S.n1 + '/' + S.d1, COLORS.aDark, 28);
+        h += text(550, 330, S.n2 + '/' + S.d2, COLORS.bDark, 28);
+      }
+    } else if (S.step === 1) {
+      // 重疊
+      h += base(big) + fill(big, 0, f1, COLORS.a, 0.6) + fill(big, 0, f2, 'url(#stripe)', 0.75);
+      h += ticks(big, S.d1, COLORS.aDark, 3, null, bar ? 14 : 8);
+      h += ticks(big, S.d2, COLORS.bDark, 3, '8 6', bar ? 14 : 8) + outline(big);
+      h += text(380, bar ? 70 : 360, '實線＝' + S.d1 + ' 等份（藍）　虛線＝' + S.d2 + ' 等份（橘）', COLORS.ink, 20);
+      if (bar) h += text(380, 290, '兩種切線對不齊，所以不能直接相減', '#b91c1c', 22);
+      else h += text(380, 30, '兩種切線對不齊，所以不能直接相減', '#b91c1c', 20);
+    } else if (S.step === 2) {
+      // 細分成同分母
+      h += base(big) + fill(big, 0, f1, COLORS.a, 0.6) + fill(big, 0, f2, 'url(#stripe)', 0.75);
+      h += ticks(big, L, '#374151', 2) + outline(big);
+      var msg = c.L === S.d1 && c.L === S.d2 ? '分母本來就一樣，不用再切' : '每一格都是 1/' + L;
+      h += text(380, bar ? 70 : 360, '全部再切成 ' + L + ' 等份，' + msg, COLORS.ink, 22);
+      if (bar) {
+        h += text(380, 275, S.n1 + '/' + S.d1 + ' ＝ ' + c.m1 + '/' + L + '（藍色 ' + c.m1 + ' 格）', COLORS.aDark, 22);
+        h += text(380, 308, S.n2 + '/' + S.d2 + ' ＝ ' + c.m2 + '/' + L + '（橘色 ' + c.m2 + ' 格）', COLORS.bDark, 22);
+      } else {
+        h += text(380, 30, S.n1 + '/' + S.d1 + '＝' + c.m1 + '/' + L + '　' + S.n2 + '/' + S.d2 + '＝' + c.m2 + '/' + L, COLORS.ink, 20);
+      }
+    } else {
+      // 相減：保留 0..rem，拿走 rem..f1
+      var remF = c.rem / L;
+      h += base(big);
+      h += fill(big, 0, remF, COLORS.ok, 0.85);
+      h += fill(big, remF, f1, 'url(#hatch)', 1);
+      h += ticks(big, L, '#374151', 2) + outline(big);
+      h += text(380, bar ? 70 : 360, '從藍色 ' + c.m1 + ' 格裡，拿走 ' + c.m2 + ' 格（斜線）', COLORS.ink, 22);
+      if (bar) h += text(380, 275, '剩下 ' + c.rem + ' 格（綠色）＝ ' + c.rem + '/' + L, COLORS.okDark, 24);
+      else h += text(380, 30, '剩下 ' + c.rem + ' 格（綠色）＝ ' + c.rem + '/' + L, COLORS.okDark, 22);
+    }
+    svg.innerHTML = h;
+  }
+
+  function drawEquation(c) {
+    var el = document.getElementById('eq');
+    var op = '<span class="op">−</span>';
+    var s = F(S.n1, S.d1, 'a') + op + F(S.n2, S.d2, 'b');
+    if (!c.valid) { el.innerHTML = s; return; }
+    if (S.step <= 1) {
+      s += '<span class="op">＝ ?</span>';
+    } else if (S.step === 2) {
+      s += '<span class="op">＝</span>' + F(c.m1, c.L, 'a') + op + F(c.m2, c.L, 'b');
+    } else {
+      s += '<span class="op">＝</span>' + F(c.m1, c.L, 'a') + op + F(c.m2, c.L, 'b') +
+           '<span class="op">＝</span>' + F(c.rem, c.L, 'r');
+      if (c.g > 1) s += '<span class="op">＝</span>' + F(c.rn, c.rd, 'r');
+    }
+    el.innerHTML = s;
+  }
+
+  function drawCaption(c) {
+    var el = document.getElementById('caption');
+    el.className = 'caption';
+    var t;
+    if (!c.valid) {
+      el.className += ' warn';
+      t = '被減數（藍色）要比減數（橘色）大，才能相減喔！請調整上面的數字。';
+    } else if (S.step === 0) {
+      t = '先看兩個分數。它們的分母不一樣（' + S.d1 + ' 和 ' + S.d2 + '），格子大小不同。按「下一步」把它們疊在一起。';
+      if (S.d1 === S.d2) t = '這兩個分數的分母一樣（都是 ' + S.d1 + '），格子大小相同，可以直接相減。仍可按「下一步」看看疊起來的樣子。';
+    } else if (S.step === 1) {
+      t = '疊在一起後，藍色的切線和橘色的切線對不齊。格子大小不同，沒辦法直接數「拿走幾格」。';
+      if (S.d1 === S.d2) t = '分母一樣，切線完全重合，可以直接比格數。';
+    } else if (S.step === 2) {
+      if (S.d1 === S.d2) t = '分母本來就相同，每一格都是 1/' + c.L + '。藍色 ' + c.m1 + ' 格，橘色 ' + c.m2 + ' 格。';
+      else t = '找 ' + S.d1 + ' 和 ' + S.d2 + ' 的最小公倍數 ' + c.L + '，把每個分數都切成 ' + c.L + ' 等份。' +
+               S.n1 + '/' + S.d1 + '＝' + c.m1 + '/' + c.L + '，' + S.n2 + '/' + S.d2 + '＝' + c.m2 + '/' + c.L + '。現在格子一樣大了。';
+    } else {
+      el.className += ' done';
+      t = '分母相同，直接把分子相減：' + c.m1 + ' − ' + c.m2 + ' ＝ ' + c.rem + '，答案是 ' + c.rem + '/' + c.L + '。';
+      if (c.rem === 0) t = '兩個分數一樣大，相減得 0。';
+      else if (c.g > 1) t += '還可以約分（分子分母同除以 ' + c.g + '）：' + c.rn + '/' + c.rd + '。';
+    }
+    el.textContent = t;
+  }
+
+  function drawControls(c) {
+    ['n1', 'd1', 'n2', 'd2'].forEach(function (k) { document.getElementById(k).textContent = S[k]; });
+    var q = function (a) { return document.querySelector('[data-act="' + a + '"]'); };
+    q('n1-').disabled = S.n1 <= 1; q('n1+').disabled = S.n1 >= S.d1 - 1;
+    q('d1-').disabled = S.d1 <= 2; q('d1+').disabled = S.d1 >= 12;
+    q('n2-').disabled = S.n2 <= 1; q('n2+').disabled = S.n2 >= S.d2 - 1;
+    q('d2-').disabled = S.d2 <= 2; q('d2+').disabled = S.d2 >= 12;
+    document.querySelectorAll('#modeSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === S.mode); });
+    document.getElementById('prev').disabled = S.step === 0;
+    var next = document.getElementById('next');
+    next.disabled = !c.valid || S.step >= STEP_COUNT - 1;
+    next.textContent = S.step >= STEP_COUNT - 1 ? '完成 ✓' : ['① 疊在一起', '② 切成同樣大的格子', '③ 算出答案'][S.step];
+    document.querySelectorAll('#dots i').forEach(function (d, i) { d.classList.toggle('on', i === S.step); });
+    document.getElementById('legend').innerHTML =
+      '<span style="--c:' + COLORS.a + '">' + S.n1 + '/' + S.d1 + '</span>' +
+      '<span style="--c:' + COLORS.b + '">' + S.n2 + '/' + S.d2 + '</span>' +
+      (S.step === 3 && c.valid ? '<span style="--c:' + COLORS.ok + '">剩下</span>' : '');
+  }
+
+  function render() {
+    var c = calc();
+    drawControls(c); drawEquation(c); drawStage(c); drawCaption(c);
+  }
+
+  // ---------- 事件 ----------
+  function resetStep() { S.step = 0; }
+  document.querySelectorAll('[data-act]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var act = btn.dataset.act, key = act.slice(0, 2), dir = act.slice(2) === '+' ? 1 : -1;
+      if (key === 'n1') S.n1 = Math.max(1, Math.min(S.d1 - 1, S.n1 + dir));
+      if (key === 'n2') S.n2 = Math.max(1, Math.min(S.d2 - 1, S.n2 + dir));
+      if (key === 'd1') { S.d1 = Math.max(2, Math.min(12, S.d1 + dir)); S.n1 = Math.min(S.n1, S.d1 - 1); }
+      if (key === 'd2') { S.d2 = Math.max(2, Math.min(12, S.d2 + dir)); S.n2 = Math.min(S.n2, S.d2 - 1); }
+      resetStep(); render();
+    });
+  });
+  document.querySelectorAll('#modeSeg button').forEach(function (b) {
+    b.addEventListener('click', function () { S.mode = b.dataset.mode; render(); });
+  });
+  document.getElementById('next').addEventListener('click', function () { if (S.step < STEP_COUNT - 1) { S.step++; render(); } });
+  document.getElementById('prev').addEventListener('click', function () { if (S.step > 0) { S.step--; render(); } });
+  document.getElementById('reset').addEventListener('click', function () { resetStep(); render(); });
+
+  var presetBox = document.getElementById('presets');
+  PRESETS.forEach(function (p) {
+    var b = document.createElement('button');
+    b.className = 'chip'; b.textContent = p[0] + '/' + p[1] + ' − ' + p[2] + '/' + p[3];
+    b.addEventListener('click', function () { S.n1 = p[0]; S.d1 = p[1]; S.n2 = p[2]; S.d2 = p[3]; resetStep(); render(); });
+    presetBox.appendChild(b);
+  });
+  var dots = document.getElementById('dots');
+  for (var i = 0; i < STEP_COUNT; i++) dots.appendChild(document.createElement('i'));
+
+  render();
+})();
+</script>
+</body>
+</html>
