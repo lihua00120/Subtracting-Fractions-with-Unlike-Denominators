@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分數重疊實驗室</title>
+  
+  <!-- 載入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 載入 React 核心庫 -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- 載入 Babel 以便在瀏覽器中直接編譯 JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* 確保基本字體與畫面高度正常 */
+    body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  
+  <!-- 應用程式會渲染在這個 div 裡面 -->
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // 將 React 的 Hooks 從全域變數中解構出來（取代原本的 import 語法）
+    const { useState, useEffect, useMemo } = React;
+
+    // ==========================================
+    // 請將之前 App.jsx 裡面的 const App = () => { ... } 
+    // 完整程式碼貼到這裡下方
+    // ==========================================
+
+    const App = () => {
+      // 這裡放你完整的 App 邏輯與 return (...)
+      return (
+        <div className="p-8 text-center text-xl">
+          載入中，請將 App 程式碼貼至 index.html...
+        </div>
+      );
+    };
+
+    // ==========================================
+    // 程式碼結束位置
+    // ==========================================
+
+    // 將 App 渲染到畫面上
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
