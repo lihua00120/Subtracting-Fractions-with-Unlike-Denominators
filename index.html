@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分數重疊實驗室</title>
+  
+  <!-- 載入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 載入 React 核心庫 -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- 載入 Babel 以便在瀏覽器中直接編譯 JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* 確保基本字體與畫面高度正常 */
+    body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  
+  <!-- 應用程式會渲染在這個 div 裡面 -->
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const App = () => {
+      const [mode, setMode] = useState('bar');
+      const [n1, setN1] = useState(5);
+      const [d1, setD1] = useState(6);
+      const [n2, setN2] = useState(2);
+      const [d2, setD2] = useState(3);
+      const [isOverlay, setIsOverlay] = useState(false);
+      const [isSubdivided, setIsSubdivided] = useState(false);
+
+      const getLcm = (a, b) => {
+        const gcd = (x, y) => (!y ? x : gcd(y, x % y));
+        return (a * b) / gcd(a, b);
+      };
+      const commonD = getLcm(d1, d2);
+
+      const handleD1Change = (val) => { setD1(val); setN1(Math.min(n1, val - 1)); setIsOverlay(false); setIsSubdivided(false); };
+      const handleD2Change = (val) => { setD2(val); setN2(Math.min(n2, val - 1)); setIsOverlay(false); setIsSubdivided(false); };
+
+      const polarToCartesian = (cx, cy, r, angleInDegrees) => {
+        const angleInRadians = (angleInDegrees - 90) * (Math.PI / 180.0);
+        return { x: cx + r * Math.cos(angleInRadians), y: cy + r * Math.sin(angleInRadians) };
+      };
+
+      const renderBar = (n, d, color, isTop) => {
+        const width = 600;
+        const height =
